@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ThreatLens AI — Prototype</title>
+<style>
+:root{--bg:#0a0e14;--panel:#111823;--border:#212b38;--text:#e7edf3;--muted:#8b98a8;--accent:#ef4444;--ok:#22c55e;--crit:#ef4444;--high:#f97316;--med:#3b82f6;--low:#64748b;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+*{box-sizing:inherit;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.4;padding:16px;min-height:100%}
+.wrap{max-width:1080px;margin:0 auto}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:18px}
+header img{height:32px;width:auto;display:block;border-radius:4px}
+h1{font-size:15px;letter-spacing:.4px;font-weight:600}
+.sub{color:var(--muted);font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:16px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+.stat b{font-size:20px;display:block}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.stages{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px}
+.stage{flex:1 1 100px;background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:11px;color:var(--muted);transition:.25s}
+.stage b{display:block;font-size:13px;color:var(--text)}
+.stage.active{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset;color:var(--text)}
+.stage.done{border-color:var(--ok)}
+.controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+button{background:var(--accent);color:#fff;border:none;border-radius:6px;padding:9px 14px;font-size:13px;cursor:pointer;font-weight:600}
+button.secondary{background:var(--panel);color:var(--text);border:1px solid var(--border)}
+button:disabled{opacity:.5;cursor:not-allowed}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:16px}
+.panel h2{font-size:12px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:8px}
+#log{height:130px;overflow-y:auto;font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--muted)}
+#log div{padding:2px 0;border-bottom:1px dashed var(--border)}
+.tblwrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:680px}
+th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+th{color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px}
+.sev{padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;color:#fff}
+.sev.Critical{background:var(--crit)} .sev.High{background:var(--high)} .sev.Medium{background:var(--med)} .sev.Low{background:var(--low)}
+.act button{padding:4px 8px;font-size:11px;margin-right:4px}
+footer{color:var(--muted);font-size:11px;text-align:center;margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+<img src="data:image/png;base64,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" alt="ThreatLens AI logo">
+<div><h1>THREATLENS AI <span class="sub">— SOC Prototype</span></h1>
+<div class="sub">AI-Powered Threat Detection · Correlation · Risk Assessment · Response</div></div>
+</header>
+
+<div class="stats">
+<div class="stat"><b id="s-events">0</b><span>Events Processed</span></div>
+<div class="stat"><b id="s-threats">0</b><span>Threats Detected</span></div>
+<div class="stat"><b id="s-active">0</b><span>Active Incidents</span></div>
+<div class="stat"><b id="s-blocked">0</b><span>Blocked / Isolated</span></div>
+</div>
+
+<div class="stages" id="stages"></div>
+
+<div class="controls">
+<button id="btn-one" onclick="runPipeline()">Simulate Live Event</button>
+<button id="btn-batch" class="secondary" onclick="runBatch(5)">Run PCAP Batch (5)</button>
+<button id="btn-reset" class="secondary" onclick="resetAll()">Reset</button>
+</div>
+
+<div class="panel">
+<h2>Pipeline Log</h2>
+<div id="log"></div>
+</div>
+
+<div class="panel">
+<h2>Incidents — SOC Dashboard</h2>
+<div class="tblwrap"><table>
+<thead><tr><th>ID</th><th>Time</th><th>Src → Dst</th><th>Signature</th><th>IOC</th><th>Risk</th><th>Severity</th><th>Status</th><th>Action</th></tr></thead>
+<tbody id="tbody"></tbody>
+</table></div>
+</div>
+
+<footer>ThreatLens AI — From raw data to actionable security intelligence.</footer>
+</div>
+
+<script>
+const STAGES=["Capture & Intake","Ingestion & Preprocessing","ML Threat Detection","Intel Correlation","Risk Analysis","Orchestration","SOC Dashboard","Response & Mitigation"];
+const IOC=["185.220.101.7","45.155.204.12","91.219.236.18","c2-relay.dark"];
+const SIGS=[[4444,"Metasploit Handler"],[6667,"IRC Botnet C2"],[31337,"Elite Backdoor"],[23,"Telnet Brute-force"],[3389,"RDP Brute-force"]];
+let stats={events:0,threats:0,active:0,blocked:0};
+let incidents=[];
+let seq=0;
+
+const stagesEl=document.getElementById('stages');
+STAGES.forEach((s,i)=>{const d=document.createElement('div');d.className='stage';d.id='st'+i;d.innerHTML='<b>0'+(i+1)+'</b>'+s;stagesEl.appendChild(d)});
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+function rnd(n){return Math.floor(Math.random()*n)}
+function pick(a){return a[rnd(a.length)]}
+function rndIP(){return rnd(255)+'.'+rnd(255)+'.'+rnd(255)+'.'+rnd(255)}
+
+function log(t){const l=document.getElementById('log');const d=document.createElement('div');d.textContent=t;l.appendChild(d);l.scrollTop=l.scrollHeight}
+
+async function stage(i,text){
+document.querySelectorAll('.stage').forEach((el,idx)=>{if(idx<i)el.className='stage done';else if(idx===i)el.className='stage active';else el.className='stage'});
+log('['+STAGES[i]+'] '+text);
+await sleep(180);
+}
+
+function genEvent(){
+const malicious=Math.random()<0.45;
+const sig=pick(SIGS);
+const port=malicious?sig[0]:pick([80,443,22,53,3306]);
+const dst=malicious&&Math.random()<0.6?pick(IOC):rndIP();
+return {src:rndIP(),dst,port,proto:pick(['TCP','UDP']),bytes:rnd(9000)+200};
+}
+function preprocess(e){return Object.assign({},e,{norm:true})}
+function detect(r){
+let score=rnd(20),sig=null;
+const m=SIGS.find(s=>s[0]===r.port);
+if(m){score+=55;sig=m[1]}
+if(r.bytes>6000)score+=10;
+return {score:Math.min(100,score),sig}
+}
+function correlate(r){const hit=IOC.includes(r.dst)?r.dst:(IOC.includes(r.src)?r.src:null);return {hit}}
+function assessRisk(mlScore,iocHit){
+const impact=iocHit?0.9:0.55;
+const score=Math.round(mlScore*impact);
+const severity=score>=70?'Critical':score>=45?'High':score>=20?'Medium':'Low';
+return {score,severity}
+}
+function orchestrate(r,det,intel,risk){
+seq++;
+const inc={id:'INC-'+String(seq).padStart(3,'0'),time:new Date().toLocaleTimeString(),src:r.src,dst:r.dst,sig:det.sig||'—',ioc:intel.hit||'—',risk:risk.score,severity:risk.severity,status:'Active'};
+incidents.unshift(inc);
+if(inc.severity!=='Low')stats.active++;
+return inc;
+}
+function renderIncidents(){
+const tb=document.getElementById('tbody');tb.innerHTML='';
+incidents.slice(0,15).forEach(inc=>{
+const tr=document.createElement('tr');
+tr.innerHTML='<td>'+inc.id+'</td><td>'+inc.time+'</td><td>'+inc.src+' → '+inc.dst+'</td><td>'+inc.sig+'</td><td>'+inc.ioc+'</td><td>'+inc.risk+'</td><td><span class="sev '+inc.severity+'">'+inc.severity+'</span></td><td>'+inc.status+'</td><td class="act">'+(inc.status==='Active'?('<button onclick="respond(\''+inc.id+'\',\'Blocked\')">Block</button><button onclick="respond(\''+inc.id+'\',\'Isolated\')">Isolate</button><button onclick="respond(\''+inc.id+'\',\'Monitoring\')">Monitor</button>'):'—')+'</td>';
+tb.appendChild(tr);
+});
+}
+function respond(id,action){
+const inc=incidents.find(i=>i.id===id);if(!inc)return;
+inc.status=action;
+if(action!=='Monitoring'){stats.blocked++;stats.active=Math.max(0,stats.active-1)}
+log('[Response & Mitigation] '+action+' applied to '+id);
+renderIncidents();updateStats();
+}
+function updateStats(){
+document.getElementById('s-events').textContent=stats.events;
+document.getElementById('s-threats').textContent=stats.threats;
+document.getElementById('s-active').textContent=stats.active;
+document.getElementById('s-blocked').textContent=stats.blocked;
+}
+function setButtons(on){['btn-one','btn-batch','btn-reset'].forEach(id=>document.getElementById(id).disabled=!on)}
+
+async function runPipeline(){
+setButtons(false);
+const evt=genEvent();
+await stage(0,'Captured flow '+evt.src+' → '+evt.dst+':'+evt.port+'/'+evt.proto);
+const rec=preprocess(evt);
+await stage(1,'Parsed & normalized ('+rec.proto+', '+rec.bytes+'B)');
+const det=detect(rec);
+await stage(2,det.sig?('Signature match: '+det.sig+' (score '+det.score+')'):('No signature match (score '+det.score+')'));
+const intel=correlate(rec);
+await stage(3,intel.hit?('IOC hit: '+intel.hit):'No IOC match');
+const risk=assessRisk(det.score,intel.hit);
+await stage(4,'Risk score '+risk.score+'/100 → '+risk.severity);
+const inc=orchestrate(rec,det,intel,risk);
+await stage(5,inc.id+' correlated & prioritized');
+renderIncidents();
+await stage(6,'Dashboard updated');
+await stage(7,(risk.severity==='Critical'||risk.severity==='High')?'Recommended: Block + Isolate':'Recommended: Monitor');
+stats.events++;if(risk.severity!=='Low')stats.threats++;
+updateStats();
+setButtons(true);
+}
+async function runBatch(n){for(let i=0;i<n;i++){await runPipeline();}}
+function resetAll(){incidents=[];seq=0;stats={events:0,threats:0,active:0,blocked:0};document.getElementById('log').innerHTML='';renderIncidents();updateStats();document.querySelectorAll('.stage').forEach(el=>el.className='stage')}
+updateStats();
+</script>
+</body>
+</html>
